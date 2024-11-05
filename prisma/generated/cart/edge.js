@@ -133,7 +133,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\NestJs_Typescript\\micro-order\\prisma\\generated\\cart",
+      "value": "D:\\NestJs_Typescript\\micro-cart\\prisma\\generated\\cart",
       "fromEnvVar": null
     },
     "config": {
@@ -147,7 +147,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\NestJs_Typescript\\micro-order\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\NestJs_Typescript\\micro-cart\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -161,6 +161,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
