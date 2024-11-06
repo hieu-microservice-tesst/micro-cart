@@ -116,7 +116,7 @@ export class CartService {
   // Xóa Cart
   async deleteCart(id: number): Promise<Cart> {
     return this.prisma.cart.delete({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         cartItems: true
       }
@@ -179,7 +179,7 @@ export class CartService {
   // Tính toán lại tổng giá trị Cart
   async recalculateCartTotals(cartId: number): Promise<{ totalItems: number; totalPrice: number }> {
     const cart = await this.prisma.cart.findUnique({
-      where: { id: cartId },
+      where: {id: Number(cartId)},
       include: { cartItems: true }
     });
 
