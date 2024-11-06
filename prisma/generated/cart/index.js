@@ -165,13 +165,13 @@ const config = {
   "inlineDatasources": {
     "db": {
       "url": {
-        "fromEnvVar": "USER_DATABASE_URL_PRISMA_URL",
+        "fromEnvVar": "CART_DATABASE_URL",
         "value": null
       }
     }
   },
-  "inlineSchema": "datasource db {\n  provider  = \"postgresql\"\n  url       = env(\"USER_DATABASE_URL_PRISMA_URL\") // uses connection pooling\n  directUrl = env(\"USER_DATABASE_URL_URL_NON_POOLING\") // uses a direct connection\n}\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/cart\"\n}\n\nmodel Cart {\n  id         Int      @id @default(autoincrement())\n  totalItems Int      @default(0)\n  totalPrice Float    @default(0.0)\n  status     String   @default(\"Pending\")\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  userId    Int\n  cartItems CartItem[]\n}\n\nmodel CartItem {\n  id       Int @id @default(autoincrement())\n  quantity Int\n\n  cartId    Int\n  cart      Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)\n  productId Int\n\n  @@unique([cartId, productId])\n}\n",
-  "inlineSchemaHash": "344761e85e7a70685993d2477f6dbe1de7f924fe3c0eb0c06e20dda6d027c55b",
+  "inlineSchema": "datasource db {\n  provider = \"postgresql\"\n  url      = env(\"CART_DATABASE_URL\")\n}\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/cart\"\n}\n\nmodel Cart {\n  id         Int      @id @default(autoincrement())\n  totalItems Int      @default(0)\n  totalPrice Float    @default(0.0)\n  status     String   @default(\"Pending\")\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  userId    Int\n  cartItems CartItem[]\n}\n\nmodel CartItem {\n  id       Int @id @default(autoincrement())\n  quantity Int\n\n  cartId    Int\n  cart      Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)\n  productId Int\n\n  @@unique([cartId, productId])\n}\n",
+  "inlineSchemaHash": "d53c4c1cdb814482580ee4ef7fba6b2457a666897f89651063702bf1f35d318b",
   "copyEngine": true
 }
 
