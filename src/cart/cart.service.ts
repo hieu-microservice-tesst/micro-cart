@@ -154,7 +154,7 @@ export class CartService {
 
   async getUser(userId: number): Promise<any> {
     try {
-      console.log('Sending request to USER_SERVICE for userId:', userId);
+
       const user = await this.userServiceClient
         .send({ cmd: 'get_user' }, userId)
         .toPromise();
@@ -163,11 +163,8 @@ export class CartService {
         console.log('User not found for userId:', userId);
         throw new HttpException('Người dùng không tồn tại', HttpStatus.NOT_FOUND);
       }
-  
-      console.log('User found:', user);
       return user;
     } catch (error) {
-      console.error('Error in getUser method:', error.message);
       throw new HttpException('Lỗi khi lấy thông tin người dùng', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
