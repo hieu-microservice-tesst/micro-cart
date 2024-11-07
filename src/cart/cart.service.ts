@@ -14,189 +14,221 @@ export class CartService {
   }
 
   // Lấy thông tin Cart
-  async cart(params: {
-    where: Prisma.CartWhereUniqueInput;
-    include?: Prisma.CartInclude;
-  }): Promise<any> {
-    const { where, include } = params;
-    const cart = await this.prisma.cart.findUnique({
-      where,
-      include: {
-        cartItems: true,
-        ...include
-      },
-    });
+  async cart(params: { where: Prisma.CartWhereUniqueInput; include?: Prisma.CartInclude; }): Promise<any> {
+    try {
+      const { where, include } = params;
+      const cart = await this.prisma.cart.findUnique({
+        where,
+        include: {
+          cartItems: true,
+          ...include
+        },
+      });
 
-    if (!cart) return null;
+      if (!cart) {
+        throw new HttpException('Giỏ hàng không tồn tại', HttpStatus.NOT_FOUND);
+      }
 
-    // Lấy thông tin product cho mỗi cart item
-    const cartItems = await Promise.all(
-      cart.cartItems.map(async (item) => {
-        const product = await this.getProduct(item.productId);
-        return {
-          ...item,
-          product
-        };
-      })
-    );
+      // Lấy thông tin product cho mỗi cart item
+      const cartItems = await Promise.all(
+        cart.cartItems.map(async (item) => {
+          const product = await this.getProduct(item.productId);
+          return {
+            ...item,
+            product
+          };
+        })
+      );
 
-    return {
-      ...cart,
-      cartItems
-    };
+      return {
+        ...cart,
+        cartItems
+      };
+    } catch (error) {
+      console.error('Error in CartService.cart:', error);
+      throw new HttpException('Lỗi khi lấy thông tin giỏ hàng', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Tạo Cart mới
-  async createCart(data: {
-    totalItems: number;
-    totalPrice: number;
-    userId: number;
-    cartItems?: { productId: number; quantity: number }[];
-  }): Promise<any> {
-    const cart = await this.prisma.cart.create({
-      data: {
-        totalItems: data.totalItems,
-        totalPrice: data.totalPrice,
-        userId: data.userId,
-        cartItems: {
-          create: data.cartItems
+  async createCart(data: { totalItems: number; totalPrice: number; userId: number; cartItems?: { productId: number; quantity: number }[]; }): Promise<any> {
+    try {
+      const cart = await this.prisma.cart.create({
+        data: {
+          totalItems: data.totalItems,
+          totalPrice: data.totalPrice,
+          userId: data.userId,
+          cartItems: {
+            create: data.cartItems
+          }
+        },
+        include: {
+          cartItems: true
         }
-      },
-      include: {
-        cartItems: true
-      }
-    });
+      });
 
-    // Lấy thông tin product cho các cart items
-    const cartItems = await Promise.all(
-      cart.cartItems.map(async (item) => {
-        const product = await this.getProduct(item.productId);
-        return {
-          ...item,
-          product
-        };
-      })
-    );
+      // Lấy thông tin product cho các cart items
+      const cartItems = await Promise.all(
+        cart.cartItems.map(async (item) => {
+          const product = await this.getProduct(item.productId);
+          return {
+            ...item,
+            product
+          };
+        })
+      );
 
-    return {
-      ...cart,
-      cartItems
-    };
+      return {
+        ...cart,
+        cartItems
+      };
+    } catch (error) {
+      console.error('Error in CartService.createCart:', error);
+      throw new HttpException('Lỗi khi tạo giỏ hàng', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Cập nhật Cart
-  async updateCart(params: {
-    where: Prisma.CartWhereUniqueInput;
-    data: Prisma.CartUpdateInput;
-  }): Promise<any> {
-    const cart = await this.prisma.cart.update({
-      where: params.where,
-      data: params.data,
-      include: {
-        cartItems: true
-      }
-    });
+  async updateCart(params: { where: Prisma.CartWhereUniqueInput; data: Prisma.CartUpdateInput; }): Promise<any> {
+    try {
+      const cart = await this.prisma.cart.update({
+        where: params.where,
+        data: params.data,
+        include: {
+          cartItems: true
+        }
+      });
 
-    const cartItems = await Promise.all(
-      cart.cartItems.map(async (item) => {
-        const product = await this.getProduct(item.productId);
-        return {
-          ...item,
-          product
-        };
-      })
-    );
+      const cartItems = await Promise.all(
+        cart.cartItems.map(async (item) => {
+          const product = await this.getProduct(item.productId);
+          return {
+            ...item,
+            product
+          };
+        })
+      );
 
-    return {
-      ...cart,
-      cartItems
-    };
+      return {
+        ...cart,
+        cartItems
+      };
+    } catch (error) {
+      console.error('Error in CartService.updateCart:', error);
+      throw new HttpException('Lỗi khi cập nhật giỏ hàng', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Xóa Cart
   async deleteCart(id: number): Promise<Cart> {
-    return this.prisma.cart.delete({
-      where: { id: Number(id) },
-      include: {
-        cartItems: true
-      }
-    });
+    try {
+      return await this.prisma.cart.delete({
+        where: { id: Number(id) },
+        include: {
+          cartItems: true
+        }
+      });
+    } catch (error) {
+      console.error('Error in CartService.deleteCart:', error);
+      throw new HttpException('Lỗi khi xóa giỏ hàng', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Lấy thông tin Product từ microservice
   async getProduct(productId: number): Promise<any> {
-    const product = await this.productServiceClient
-      .send({ cmd: 'get_product' }, productId)
-      .toPromise();
+    try {
+      const product = await this.productServiceClient
+        .send({ cmd: 'get_product' }, productId)
+        .toPromise();
 
-    if (!product) {
-      throw new HttpException('Không tìm thấy sản phẩm', HttpStatus.NOT_FOUND);
+      if (!product) {
+        throw new HttpException('Không tìm thấy sản phẩm', HttpStatus.NOT_FOUND);
+      }
+
+      return product;
+    } catch (error) {
+      console.error('Error in CartService.getProduct:', error);
+      throw new HttpException('Lỗi khi lấy thông tin sản phẩm', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    return product;
   }
 
-
   async getUser(userId: number): Promise<any> {
-    const user = await this.userServiceClient
-      .send({ cmd: 'get_user' }, userId)
-      .toPromise();
+    try {
+      const user = await this.userServiceClient
+        .send({ cmd: 'get_user' }, userId)
+        .toPromise();
 
-    if (!user) {
-      throw new HttpException('Người dùng không tồn tại', HttpStatus.NOT_FOUND);
+      if (!user) {
+        throw new HttpException('Người dùng không tồn tại', HttpStatus.NOT_FOUND);
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error in CartService.getUser:', error);
+      throw new HttpException('Lỗi khi lấy thông tin người dùng', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    return user;
   }
 
   // Lấy Cart theo userId
   async getCartByUserId(userId: number): Promise<any> {
-    const cart = await this.prisma.cart.findFirst({
-      where: { userId },
-      include: {
-        cartItems: true
+    try {
+      const cart = await this.prisma.cart.findFirst({
+        where: { userId },
+        include: {
+          cartItems: true
+        }
+      });
+
+      if (!cart) {
+        throw new HttpException('Giỏ hàng không tồn tại', HttpStatus.NOT_FOUND);
       }
-    });
 
-    if (!cart) return null;
+      const cartItems = await Promise.all(
+        cart.cartItems.map(async (item) => {
+          const product = await this.getProduct(item.productId);
+          return {
+            ...item,
+            product
+          };
+        })
+      );
 
-    const cartItems = await Promise.all(
-      cart.cartItems.map(async (item) => {
-        const product = await this.getProduct(item.productId);
-        return {
-          ...item,
-          product
-        };
-      })
-    );
-
-    return {
-      ...cart,
-      cartItems
-    };
+      return {
+        ...cart,
+        cartItems
+      };
+    } catch (error) {
+      console.error('Error in CartService.getCartByUserId:', error);
+      throw new HttpException('Lỗi khi lấy giỏ hàng theo userId', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Tính toán lại tổng giá trị Cart
   async recalculateCartTotals(cartId: number): Promise<{ totalItems: number; totalPrice: number }> {
-    const cart = await this.prisma.cart.findUnique({
-      where: {id: Number(cartId)},
-      include: { cartItems: true }
-    });
+    try {
+      const cart = await this.prisma.cart.findUnique({
+        where: { id: Number(cartId) },
+        include: { cartItems: true }
+      });
 
-    if (!cart) {
-      throw new HttpException('Giỏ hàng không tồn tại', HttpStatus.NOT_FOUND);
+      if (!cart) {
+        throw new HttpException('Giỏ hàng không tồn tại', HttpStatus.NOT_FOUND);
+      }
+
+      let totalItems = 0;
+      let totalPrice = 0;
+
+      for (const item of cart.cartItems) {
+        const product = await this.getProduct(item.productId);
+        totalItems += item.quantity;
+        totalPrice += product.price * item.quantity;
+      }
+
+      return { totalItems, totalPrice };
+    } catch (error) {
+      console.error('Error in CartService.recalculateCartTotals:', error);
+      throw new HttpException('Lỗi khi tính toán lại tổng giỏ hàng', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    let totalItems = 0;
-    let totalPrice = 0;
-
-    for (const item of cart.cartItems) {
-      const product = await this.getProduct(item.productId);
-      totalItems += item.quantity;
-      totalPrice += product.price * item.quantity;
-    }
-
-    return { totalItems, totalPrice };
   }
 }
 
