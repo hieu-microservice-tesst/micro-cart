@@ -15,7 +15,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           urls: ['amqps://dtqrsesy:bT2AyYaZpfFNd-qcnGeY2B_QWLwCOQbD@vulture.rmq.cloudamqp.com/dtqrsesy'],
           queue: 'user_queue',
           queueOptions: {
-            durable: false
+            durable: true
           }
         },
       },
@@ -26,7 +26,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           urls: ['amqps://dtqrsesy:bT2AyYaZpfFNd-qcnGeY2B_QWLwCOQbD@vulture.rmq.cloudamqp.com/dtqrsesy'],
           queue: 'product_queue',
           queueOptions: {
-            durable: false
+            durable: true
           }
         },
       },
@@ -37,7 +37,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           urls: ['amqps://dtqrsesy:bT2AyYaZpfFNd-qcnGeY2B_QWLwCOQbD@vulture.rmq.cloudamqp.com/dtqrsesy'],
           queue: 'cart_queue',
           queueOptions: {
-            durable: false
+            durable: true
           }
         },
       }
