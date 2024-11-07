@@ -12,7 +12,6 @@ async function bootstrap() {
       queueOptions: { durable: false },
     },
   });
-
   app.startAllMicroservices().catch(error => console.error('Microservice error:', error));
   await app.listen(3003);
 }
