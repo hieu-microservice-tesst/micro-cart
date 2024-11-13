@@ -51,7 +51,7 @@ export class CartService {
   }
 
   // Tạo Cart mới
-  async createCart(data: { totalItems: number; totalPrice: number; userId: number; cartItems?: { productId: number; quantity: number }[]; }): Promise<any> {
+  async createCart(data: { totalItems: number; totalPrice: number; userId: number; cartItems?: Prisma.CartItemCreateInput[] }): Promise<any> {
     try {
       const cart = await this.prisma.cart.create({
         data: {
@@ -152,13 +152,13 @@ export class CartService {
     }
   }
 
+  // Lấy thông tin người dùng từ microservice
   async getUser(userId: number): Promise<any> {
     try {
-
       const user = await this.userServiceClient
         .send({ cmd: 'get_user' }, userId)
         .toPromise();
-  
+
       if (!user) {
         console.log('User not found for userId:', userId);
         throw new HttpException('Người dùng không tồn tại', HttpStatus.NOT_FOUND);
@@ -168,22 +168,23 @@ export class CartService {
       throw new HttpException('Lỗi khi lấy thông tin người dùng', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
 
   // Lấy Cart theo userId
   async getCartByUserId(userId: number): Promise<any> {
     try {
       const cart = await this.prisma.cart.findFirst({
-        where: { userId },
+        where: { userId: Number(userId) },
         include: {
           cartItems: true
         }
       });
 
+      // Nếu không tìm thấy cart, trả về null thay vì throw exception
       if (!cart) {
-        throw new HttpException('Giỏ hàng không tồn tại', HttpStatus.NOT_FOUND);
+        return null;
       }
 
+      // Nếu có cart, lấy thêm thông tin product
       const cartItems = await Promise.all(
         cart.cartItems.map(async (item) => {
           const product = await this.getProduct(item.productId);
@@ -198,6 +199,7 @@ export class CartService {
         ...cart,
         cartItems
       };
+
     } catch (error) {
       console.error('Error in CartService.getCartByUserId:', error);
       throw new HttpException('Lỗi khi lấy giỏ hàng theo userId', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -237,40 +239,37 @@ export class CartService {
 export class CartItemService {
   private prisma: PrismaClient;
 
-
-    constructor(
-        @Inject('PRODUCT_SERVICE') private readonly productServiceClient: ClientProxy
-      ) {
-        this.prisma = new PrismaClient();
-      }
-    
- 
+  constructor(
+    @Inject('PRODUCT_SERVICE') private readonly productServiceClient: ClientProxy
+  ) {
+    this.prisma = new PrismaClient();
+  }
 
   // Tạo CartItem mới
-  async createCartItem(data: {
-    cartId: number;
-    productId: number;
-    quantity: number;
-  }): Promise<any> {
+  async createCartItem(data: { productId: number; quantity: number; cartId: number }): Promise<any> {
     const cartItem = await this.prisma.cartItem.create({
-      data
+      data: {
+        productId: data.productId,
+        quantity: data.quantity,
+        cart: {
+          connect: { id: data.cartId }
+        }
+      }
     });
-
+  
     const product = await this.productServiceClient
       .send({ cmd: 'get_product' }, cartItem.productId)
       .toPromise();
-
+  
     return {
       ...cartItem,
       product
     };
   }
-
+  
+  
   // Cập nhật CartItem
-  async updateCartItem(params: {
-    where: Prisma.CartItemWhereUniqueInput;
-    data: Prisma.CartItemUpdateInput;
-  }): Promise<any> {
+  async updateCartItem(params: { where: Prisma.CartItemWhereUniqueInput; data: Prisma.CartItemUpdateInput; }): Promise<any> {
     const cartItem = await this.prisma.cartItem.update({
       where: params.where,
       data: params.data
